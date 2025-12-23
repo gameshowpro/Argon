@@ -26,6 +26,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gameshowpro/Argon
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -41,11 +42,12 @@ jobs:
           ARGON_TPM_AUTH: ${{ secrets.ARGON_TPM_AUTH }}
         run: ./scripts/injectSecrets.ps1
 
-      - name: Calculate Version
+      - name: Configure Versioning
         id: version
         shell: pwsh
         run: |
-          $versionJson = Get-Content version.json | ConvertFrom-Json
+          $jsonPath = "version.json"
+          $versionJson = Get-Content $jsonPath | ConvertFrom-Json
           $majorMinor = $versionJson.version
           $downstream = "${{ inputs.ARGON_DOWNSTREAM_VERSION }}"
           
@@ -61,18 +63,20 @@ jobs:
               Write-Error "Invalid ARGON_DOWNSTREAM_VERSION format. Expected 'Patch[-Suffix]' (e.g. 123 or 123-beta1)"
           }
 
-          $assemblyVersion = "$majorMinor.$patch.0"
-          $packageVersion = "$majorMinor.$patch$suffix"
+          $newVersion = "$majorMinor.$patch$suffix"
           
-          Write-Host "Assembly Version: $assemblyVersion"
-          Write-Host "Package Version: $packageVersion"
+          # Update version.json so NBGV picks it up
+          $versionJson.version = $newVersion
+          $versionJson | ConvertTo-Json -Depth 10 | Set-Content $jsonPath
           
-          "ASSEMBLY_VERSION=$assemblyVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "PACKAGE_VERSION=$packageVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Updated version.json to: $newVersion"
+          
+          # Export for Chocolatey step
+          "PACKAGE_VERSION=$newVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Pack NuGet (Argon.Common)
         run: |
-          dotnet pack src/GameshowPro.Argon.Common/GameshowPro.Argon.Common.csproj -c Release -p:PackageId=${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Common -p:Version=${{ env.PACKAGE_VERSION }} -p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }} -p:FileVersion=${{ env.ASSEMBLY_VERSION }} -p:InformationalVersion=${{ env.PACKAGE_VERSION }} -o ./artifacts
+          dotnet pack src/GameshowPro.Argon.Common/GameshowPro.Argon.Common.csproj -c Release -p:PackageId=${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Common -o ./artifacts
 
       - name: Publish for Chocolatey
         run: |
@@ -110,7 +114,7 @@ jobs:
 
       - name: Build Linux Executable (Argon.Create)
         run: |
-          dotnet publish src/GameshowPro.Argon.Create/Argon.Create.csproj -c Release -r linux-x64 --self-contained -p:AssemblyName=${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Create -p:Version=${{ env.PACKAGE_VERSION }} -p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }} -p:FileVersion=${{ env.ASSEMBLY_VERSION }} -p:InformationalVersion=${{ env.PACKAGE_VERSION }} -o ./artifacts/linux
+          dotnet publish src/GameshowPro.Argon.Create/Argon.Create.csproj -c Release -r linux-x64 --self-contained -p:AssemblyName=${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Create -o ./artifacts/linux
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
