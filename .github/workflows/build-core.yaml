@@ -116,7 +116,8 @@ jobs:
 
       - name: Build Linux Executable (Argon.Create)
         run: |
-          dotnet publish src/GameshowPro.Argon.Create/Argon.Create.csproj -c Release -r linux-x64 --self-contained -p:AssemblyName=${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Create -o ./artifacts/linux
+          dotnet publish src/GameshowPro.Argon.Create/Argon.Create.csproj -c Release -r linux-x64 --self-contained -o ./artifacts/linux
+          Move-Item -Path "./artifacts/linux/Argon.Create" -Destination "./artifacts/linux/${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Create"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
