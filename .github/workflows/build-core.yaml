@@ -78,7 +78,8 @@ jobs:
         run: |
           dotnet pack src/GameshowPro.Argon.Common/GameshowPro.Argon.Common.csproj -c Release -p:PackageId=${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Common -o ./artifacts
 
-      - name: Publish for Chocolatey
+      - name: Build and Pack Chocolatey
+        shell: pwsh
         run: |
           $projects = @(
               @{ Name="Argon.Client"; Path="src/GameshowPro.Argon.Client/Argon.Client.csproj" },
@@ -87,29 +88,30 @@ jobs:
               @{ Name="Argon.Test"; Path="src/GameshowPro.Argon.Test/Argon.Test.csproj" }
           )
 
-          foreach ($proj in $projects) {
-              dotnet publish $proj.Path -c Release -o ./build/choco/$($proj.Name)/tools
-          }
-
-      - name: Pack Chocolatey
-        shell: pwsh
-        run: |
           $chocoDir = "./build/choco"
           $baseName = "${{ inputs.ARGON_PACKAGE_NAME_BASE }}"
           $version = "${{ env.PACKAGE_VERSION }}"
 
-          Get-ChildItem $chocoDir -Filter "publish.nuspec" -Recurse | ForEach-Object {
-              $nuspec = $_.FullName
-              Write-Host "Processing $nuspec"
-              
-              # Update ID and Version in nuspec
-              # Assuming standard nuspec format
-              [xml]$xml = Get-Content $nuspec
-              $xml.package.metadata.id = "$baseName.$($xml.package.metadata.id)"
-              $xml.package.metadata.version = $version
-              $xml.Save($nuspec)
+          foreach ($proj in $projects) {
+              # Publish
+              dotnet publish $proj.Path -c Release -o "$chocoDir/$($proj.Name)/tools"
 
-              choco pack $nuspec --output-directory ./artifacts
+              # Pack
+              $nuspec = Join-Path $chocoDir "$($proj.Name)\publish.nuspec"
+              
+              if (Test-Path $nuspec) {
+                  Write-Host "Processing $nuspec for component $($proj.Name)"
+                  
+                  # Update ID and Version in nuspec
+                  [xml]$xml = Get-Content $nuspec
+                  $xml.package.metadata.id = "$baseName.$($proj.Name)"
+                  $xml.package.metadata.version = $version
+                  $xml.Save($nuspec)
+
+                  choco pack $nuspec --output-directory ./artifacts
+              } else {
+                  Write-Warning "Nuspec file not found: $nuspec"
+              }
           }
 
       - name: Build Linux Executable (Argon.Create)
