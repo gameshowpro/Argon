@@ -70,9 +70,13 @@ jobs:
           $versionJson | ConvertTo-Json -Depth 10 | Set-Content $jsonPath
           
           Write-Host "Updated version.json to: $newVersion"
-          
-          # Export for Chocolatey step
-          "PACKAGE_VERSION=$newVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+
+      - name: https://github.com/dotnet/nbgv
+        id: nbgv
+        uses: dotnet/nbgv@v0.4.2
+        with:
+          setAllVars: true
 
       - name: Pack NuGet (Argon.Common)
         run: |
@@ -90,7 +94,7 @@ jobs:
 
           $chocoDir = "./build/choco"
           $baseName = "${{ inputs.ARGON_PACKAGE_NAME_BASE }}"
-          $version = "${{ env.PACKAGE_VERSION }}"
+          $version = "${{ env.NBGV_SemVer2 }}"
 
           foreach ($proj in $projects) {
               # Publish
@@ -124,3 +128,11 @@ jobs:
         with:
           name: argon-artifacts
           path: ./artifacts/**/*
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.NBGV_SemVer2 }}
+          files: |
+            ./artifacts/*.nupkg
+            ./artifacts/linux/*
