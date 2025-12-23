@@ -49,6 +49,10 @@ jobs:
           $majorMinor = $versionJson.version
           $downstream = "${{ inputs.ARGON_DOWNSTREAM_VERSION }}"
           
+          if ($downstream -match "\.") {
+              Write-Error "ARGON_DOWNSTREAM_VERSION ($downstream) cannot contain a dot (.)."
+          }
+
           # Parse downstream version (e.g. "123-beta1" -> Patch=123, Suffix=-beta1)
           if ($downstream -match "^(\d+)(.*)$") {
               $patch = $matches[1]
