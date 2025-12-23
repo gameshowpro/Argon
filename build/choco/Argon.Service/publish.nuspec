@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>$packageId$</id>
+    <version>$version$</version>
+    <title>Argon Service</title>
+    <authors>Hamish Barjonas</authors>
+    <tags>Argon Service</tags>
+    <summary>Argon Service application</summary>
+    <description>Argon Service application</description>
+    <dependencies>
+      <dependency id="dotnet-9.0-desktopruntime" version="9.0.6" />
+    </dependencies>
+    <releaseNotes>$releaseNotes$</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+    <file src="bin\**" target="binaries" />
+  </files>
+</package>

@@ -1,0 +1,1 @@
+﻿Get-Process -Name "Argon.Client" -ErrorAction Ignore | Foreach-Object { $_.CloseMainWindow() | Out-Null }

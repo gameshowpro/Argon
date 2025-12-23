@@ -1,0 +1,113 @@
+name: Build Core
+
+on:
+  workflow_call:
+    inputs:
+      ARGON_PACKAGE_NAME_BASE:
+        required: true
+        type: string
+      ARGON_DOWNSTREAM_VERSION:
+        required: true
+        type: string
+    secrets:
+      ARGON_PRIVATE_KEY:
+        required: true
+      ARGON_PUBLIC_KEY:
+        required: true
+      ARGON_NOISE:
+        required: true
+      ARGON_TPM_AUTH:
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest #required for Chocolatey packaging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Inject Secrets
+        shell: pwsh
+        env:
+          ARGON_PRIVATE_KEY: ${{ secrets.ARGON_PRIVATE_KEY }}
+          ARGON_PUBLIC_KEY: ${{ secrets.ARGON_PUBLIC_KEY }}
+          ARGON_NOISE: ${{ secrets.ARGON_NOISE }}
+          ARGON_TPM_AUTH: ${{ secrets.ARGON_TPM_AUTH }}
+        run: ./scripts/injectSecrets.ps1
+
+      - name: Calculate Version
+        id: version
+        shell: pwsh
+        run: |
+          $versionJson = Get-Content version.json | ConvertFrom-Json
+          $majorMinor = $versionJson.version
+          $downstream = "${{ inputs.ARGON_DOWNSTREAM_VERSION }}"
+          
+          # Parse downstream version (e.g. "123-beta1" -> Patch=123, Suffix=-beta1)
+          if ($downstream -match "^(\d+)(.*)$") {
+              $patch = $matches[1]
+              $suffix = $matches[2]
+          } else {
+              Write-Error "Invalid ARGON_DOWNSTREAM_VERSION format. Expected 'Patch[-Suffix]' (e.g. 123 or 123-beta1)"
+          }
+
+          $assemblyVersion = "$majorMinor.$patch.0"
+          $packageVersion = "$majorMinor.$patch$suffix"
+          
+          Write-Host "Assembly Version: $assemblyVersion"
+          Write-Host "Package Version: $packageVersion"
+          
+          "ASSEMBLY_VERSION=$assemblyVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "PACKAGE_VERSION=$packageVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Pack NuGet (Argon.Common)
+        run: |
+          dotnet pack src/GameshowPro.Argon.Common/GameshowPro.Argon.Common.csproj -c Release -p:PackageId=${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Common -p:Version=${{ env.PACKAGE_VERSION }} -p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }} -p:FileVersion=${{ env.ASSEMBLY_VERSION }} -p:InformationalVersion=${{ env.PACKAGE_VERSION }} -o ./artifacts
+
+      - name: Publish for Chocolatey
+        run: |
+          $projects = @(
+              @{ Name="Argon.Client"; Path="src/GameshowPro.Argon.Client/Argon.Client.csproj" },
+              @{ Name="Argon.Service"; Path="src/GameshowPro.Argon.Service/Argon.Service.csproj" },
+              @{ Name="Argon.Create"; Path="src/GameshowPro.Argon.Create/Argon.Create.csproj" },
+              @{ Name="Argon.Test"; Path="src/GameshowPro.Argon.Test/Argon.Test.csproj" }
+          )
+
+          foreach ($proj in $projects) {
+              dotnet publish $proj.Path -c Release -o ./build/choco/$($proj.Name)/tools
+          }
+
+      - name: Pack Chocolatey
+        shell: pwsh
+        run: |
+          $chocoDir = "./build/choco"
+          $baseName = "${{ inputs.ARGON_PACKAGE_NAME_BASE }}"
+          $version = "${{ env.PACKAGE_VERSION }}"
+
+          Get-ChildItem $chocoDir -Filter "publish.nuspec" -Recurse | ForEach-Object {
+              $nuspec = $_.FullName
+              Write-Host "Processing $nuspec"
+              
+              # Update ID and Version in nuspec
+              # Assuming standard nuspec format
+              [xml]$xml = Get-Content $nuspec
+              $xml.package.metadata.id = "$baseName.$($xml.package.metadata.id)"
+              $xml.package.metadata.version = $version
+              $xml.Save($nuspec)
+
+              choco pack $nuspec --output-directory ./artifacts
+          }
+
+      - name: Build Linux Executable (Argon.Create)
+        run: |
+          dotnet publish src/GameshowPro.Argon.Create/Argon.Create.csproj -c Release -r linux-x64 --self-contained -p:AssemblyName=${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Create -p:Version=${{ env.PACKAGE_VERSION }} -p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }} -p:FileVersion=${{ env.ASSEMBLY_VERSION }} -p:InformationalVersion=${{ env.PACKAGE_VERSION }} -o ./artifacts/linux
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: argon-artifacts
+          path: ./artifacts/**/*

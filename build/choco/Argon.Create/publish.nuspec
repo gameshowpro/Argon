@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>$packageId$</id>
+    <version>$version$</version>
+    <title>Argon Create</title>
+    <authors>Hamish Barjonas</authors>
+    <tags>Argon Create</tags>
+    <summary>Argon Create application</summary>
+    <description>Argon Create application</description>
+    <dependencies>
+      <dependency id="dotnet-10.0-runtime" version="10.0.1" />
+    </dependencies>
+    <releaseNotes>$releaseNotes$</releaseNotes>
+  </metadata>
+  <files>
+    <file src="**" target="binaries" />
+  </files>
+</package>
