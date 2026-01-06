@@ -121,13 +121,11 @@ jobs:
       - name: Build Linux Executable (Argon.Create)
         run: |
           dotnet publish src/GameshowPro.Argon.Create/Argon.Create.csproj -c Release -r linux-x64 --self-contained -o ./artifacts/linux
-          Move-Item -Path "./artifacts/linux/Argon.Create" -Destination "./artifacts/linux/${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Create"
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: argon-artifacts
-          path: ./artifacts/**/*
+          $exeName = "${{ inputs.ARGON_PACKAGE_NAME_BASE }}.Argon.Create"
+          Move-Item -Path "./artifacts/linux/Argon.Create" -Destination "./artifacts/linux/$exeName"
+          
+          # Create a tar.gz for easier distribution
+          tar -czvf "./artifacts/$exeName-linux-x64.tar.gz" -C ./artifacts/linux .
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
@@ -135,4 +133,4 @@ jobs:
           tag_name: v${{ env.NBGV_SemVer2 }}
           files: |
             ./artifacts/*.nupkg
-            ./artifacts/linux/*
+            ./artifacts/*.tar.gz

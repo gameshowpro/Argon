@@ -71,4 +71,32 @@ Major and Minor numbers come from here, signifying functionality changes and bug
     1. Build self-contained single-file executable file for linux-x64, for later automation use
         * `{ARGON_PACKAGE_NAME_BASE}.Argon.Create`
 
-After the release is succefully created, the downstream workflow may continue with additional steps, including the publishing of artefacts from the new release to a specific package source.
+After the release is successfully created, the downstream workflow may continue with additional steps, including the publishing of artifacts from the new release to a specific package source.
+
+## Consuming the Linux Tool
+The build produces a standalone Linux executable for `Argon.Create`, valid for `linux-x64` architecture, bundled as a `.tar.gz` archive. This is useful for downstream workflows that need to generate licenses or keys on a Linux runner.
+
+To use the tool in a GitHub Actions workflow (running on Ubuntu):
+
+```yaml
+steps:
+- name: Download and Extract Argon Tool
+  env:
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # This matches the pattern {ARGON_PACKAGE_NAME_BASE}.Argon.Create
+    TOOL_NAME: Foo.Bar.Argon.Create 
+    # The tag version created by the build
+    VERSION: 1.2.3-beta1
+  run: |
+    # Download the specific asset from the release
+    gh release download v$VERSION -p "*linux-x64.tar.gz"
+    
+    # Create a tool directory
+    mkdir -p tool
+    
+    # Extract the archive (contains the executable)
+    tar -xzvf "$TOOL_NAME-linux-x64.tar.gz" -C tool
+    
+    # Run the tool
+    ./tool/$TOOL_NAME --help
+```
