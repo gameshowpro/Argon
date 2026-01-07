@@ -18,10 +18,16 @@ on:
         required: true
       ARGON_TPM_AUTH:
         required: true
+    outputs:
+      release_tag:
+        description: "The release tag created"
+        value: ${{ jobs.build.outputs.release_tag }}
 
 jobs:
   build:
     runs-on: windows-latest #required for Chocolatey packaging
+    outputs:
+      release_tag: ${{ steps.output_tag.outputs.release_tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -134,3 +140,8 @@ jobs:
           files: |
             ./artifacts/*.nupkg
             ./artifacts/*.tar.gz
+
+      - name: Output Release Tag
+        id: output_tag
+        shell: pwsh
+        run: echo "release_tag=v${{ env.NBGV_SemVer2 }}" >> $env:GITHUB_OUTPUT
