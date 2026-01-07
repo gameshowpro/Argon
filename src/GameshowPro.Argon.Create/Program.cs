@@ -30,7 +30,7 @@ if (args.Length > 0)
 while (true)
 {
     Console.ForegroundColor = ConsoleColor.Green;
-    Console.WriteLine("Argon create utility. Select function:");
+    Console.WriteLine($"Argon client utility {GetProductVersion<Program>()}. Select function:");
     Console.ForegroundColor = ConsoleColor.Yellow;
     Console.WriteLine(" 1. Write key pair");
     Console.WriteLine(" 2. Show key hash");

@@ -8,6 +8,9 @@ string _licensePayload = @"{
     ""Icelandic"": ""Ég get etið gler án þess að meiða mig.""
 }";
 
+Console.WriteLine($"Argon test utility {Tools.GetProductVersion<Program>()}.");
+
+
 GetPublicKeyResult getPublicKeyResult = Tools.GetPublicKey();
 if (getPublicKeyResult.Code != GetPublicKeyResultCode.Created || getPublicKeyResult.Key == null)
 {

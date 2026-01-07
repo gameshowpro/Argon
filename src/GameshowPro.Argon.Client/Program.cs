@@ -1,9 +1,8 @@
 ﻿using Argon;
-using System.Reflection;
 while (true)
 {
     Console.ForegroundColor = ConsoleColor.White;
-    Console.WriteLine($"Argon client utility {Assembly.GetCallingAssembly().GetName().Version?.ToString()}. Select function:");
+    Console.WriteLine($"Argon client utility {GetProductVersion<Program>()}. Select function:");
     Console.ForegroundColor = ConsoleColor.Yellow;
     Console.WriteLine(" 1. Ensure control");
     Console.WriteLine(" 2. Check control");
@@ -56,7 +55,7 @@ while (true)
                 Console.ForegroundColor = checkResult.IsOk ? ConsoleColor.Green : ConsoleColor.Red;
 
                 Console.WriteLine("Result: {0}", checkResult.IsOk ? "OK" : "Fail");
-                Console.WriteLine("{0} seconds", checkResult.Details);
+                Console.WriteLine("{0}", checkResult.Details);
             }
             else
             {
@@ -65,7 +64,7 @@ while (true)
             }
             break;
         case ConsoleKey.D6:
-            Tools.CheckAndRachetTimeResult timeResult = CheckAndRachetTime();
+            CheckAndRachetTimeResult timeResult = CheckAndRachetTime();
             Console.ForegroundColor = timeResult.DateTimeOffset.HasValue ? ConsoleColor.Green : ConsoleColor.Red;
             if (timeResult.DateTimeOffset.HasValue)
             {
@@ -78,7 +77,7 @@ while (true)
             Console.WriteLine("{0}", timeResult.Message);
             break;
         case ConsoleKey.D7:
-            Tools.CheckAndRachetTimeResult timeResult2 = CheckTime();
+            CheckAndRachetTimeResult timeResult2 = CheckTime();
             Console.ForegroundColor = timeResult2.DateTimeOffset.HasValue ? ConsoleColor.Green : ConsoleColor.Red;
             if (timeResult2.DateTimeOffset.HasValue)
             {
