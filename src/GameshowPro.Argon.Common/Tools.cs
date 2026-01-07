@@ -118,7 +118,16 @@ public static class Tools
         }
     }
 
-    private static bool IsAdmin() => new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+    private static bool IsAdmin()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+
+            return new WindowsPrincipal(WindowsIdentity.GetCurrent())
+                .IsInRole(WindowsBuiltInRole.Administrator);
+        }
+        return false;
+    }
 
     public static InitializeResult CheckControl()
     {
@@ -545,5 +554,11 @@ public static class Tools
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"Working directory was kept as {GetWorkingDir()}");
         }
+    }
+
+    public static string GetProductVersion<T>()
+    {
+        string assemblyPath = typeof(T).Assembly.Location;
+        return FileVersionInfo.GetVersionInfo(assemblyPath).ProductVersion ?? "unknown";
     }
 }
