@@ -39,7 +39,7 @@ function Set-CSharpSecret {
     # Group 2: Suffix (closing brace/bracket + semicolon)
     # The content between them is matched by .*? but not captured in a group we use (it's replaced)
     
-    $pattern = "(?s)(internal static readonly byte\[\]\s+$VariableName\s*=\s*(?:\{|\[)).*?((?:\}|\]);)"
+    $pattern = "(?s)(static readonly byte\[\]\s+$VariableName\s*=\s*(?:\{|\[)).*?((?:\}|\]);)"
     
     if ($fileContent -match $pattern) {
         # Construct replacement string using captured groups $1 and $2
@@ -57,7 +57,9 @@ function Set-CSharpSecret {
 $repoRoot = (Resolve-Path "$PSScriptRoot\..").Path
 $privateFile = Join-Path $repoRoot "src\GameshowPro.Argon.Create\Private.cs"
 $publicFile = Join-Path $repoRoot "src\GameshowPro.Argon.Common\Public.cs"
+$authFile = Join-Path $repoRoot "src\GameshowPro.Argon.Common\Tools.cs"
 
 Set-CSharpSecret -FilePath $privateFile -VariableName "s_private" -EnvVarName "ARGON_PRIVATE_KEY"
 Set-CSharpSecret -FilePath $publicFile -VariableName "s_public" -EnvVarName "ARGON_PUBLIC_KEY"
 Set-CSharpSecret -FilePath $publicFile -VariableName "s_noise" -EnvVarName "ARGON_NOISE"
+Set-CSharpSecret -FilePath $authFile -VariableName "s_auth" -EnvVarName "ARGON_TPM_AUTH"

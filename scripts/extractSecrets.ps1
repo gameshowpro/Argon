@@ -12,9 +12,9 @@ function Get-SecretFromFile {
 
     $content = Get-Content $FilePath -Raw
     
-    # Regex to match: internal static readonly byte[] VARNAME = { ... }; or [ ... ];
+    # Regex to match: static readonly byte[] VARNAME = { ... }; or [ ... ];
     # (?s) enables single-line mode so . matches newlines
-    $pattern = "(?s)internal static readonly byte\[\]\s+$VariableName\s*=\s*(?:\{|\[)(.*?)(?:\}|\]);"
+    $pattern = "(?s)static readonly byte\[\]\s+$VariableName\s*=\s*(?:\{|\[)(.*?)(?:\}|\]);"
     
     if ($content -match $pattern) {
         $arrayContent = $matches[1]
@@ -41,6 +41,7 @@ function Get-SecretFromFile {
 $repoRoot = Resolve-Path "$PSScriptRoot\.."
 $privateFile = Join-Path $repoRoot "src\GameshowPro.Argon.Create\Private.cs"
 $publicFile = Join-Path $repoRoot "src\GameshowPro.Argon.Common\Public.cs"
+$authFile = Join-Path $repoRoot "src\GameshowPro.Argon.Common\Tools.cs"
 
 $privateKey = Get-SecretFromFile -FilePath $privateFile -VariableName "s_private"
 if ($privateKey) {
@@ -55,4 +56,9 @@ if ($publicKey) {
 $noise = Get-SecretFromFile -FilePath $publicFile -VariableName "s_noise"
 if ($noise) {
     Write-Host "ARGON_NOISE = $noise"
+}
+
+$auth = Get-SecretFromFile -FilePath $authFile -VariableName "s_auth"
+if ($auth) {
+    Write-Host "ARGON_TPM_AUTH = $auth"
 }

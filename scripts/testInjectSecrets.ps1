@@ -17,6 +17,11 @@ if (-not [string]::IsNullOrWhiteSpace($noise)) {
     $env:ARGON_NOISE = $noise.Trim()
 }
 
+$auth = Read-Host "ARGON_TPM_AUTH"
+if (-not [string]::IsNullOrWhiteSpace($auth)) {
+    $env:ARGON_TPM_AUTH = $auth.Trim()
+}
+
 Write-Host "Injecting provided secrets..."
 $scriptPath = Join-Path $PSScriptRoot "injectSecrets.ps1"
 & $scriptPath
