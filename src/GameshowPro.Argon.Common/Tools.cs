@@ -122,15 +122,8 @@ public static class Tools
     }
 
     private static bool IsAdmin()
-    {
-        if (OperatingSystem.IsWindows())
-        {
-
-            return new WindowsPrincipal(WindowsIdentity.GetCurrent())
+        => new WindowsPrincipal(WindowsIdentity.GetCurrent())
                 .IsInRole(WindowsBuiltInRole.Administrator);
-        }
-        return false;
-    }
 
     public static InitializeResult CheckControl()
     {
