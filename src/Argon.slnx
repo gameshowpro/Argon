@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="GameshowPro.Argon.Client/Argon.Client.csproj" />
+  <Project Path="GameshowPro.Argon.Common/GameshowPro.Argon.Common.csproj" />
+  <Project Path="GameshowPro.Argon.Create/Argon.Create.csproj" />
+  <Project Path="GameshowPro.Argon.Service/Argon.Service.csproj" />
+  <Project Path="GameshowPro.Argon.Test/Argon.Test.csproj" />
+</Solution>
